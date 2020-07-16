@@ -1,0 +1,13 @@
+[GIN-VUE-ADMIN]2020/07/08 - 11:35:22.455 d:/git/gin-vue-test/server/initialize/mysql.go:14 ▶ [ERROR] MySQL启动异常 Error 1045: Access denied for user 'root'@'localhost' (using password: YES)
+[GIN-VUE-ADMIN]2020/07/08 - 11:39:36.206 d:/git/gin-vue-test/server/initialize/db_table.go:25 ▶ [DEBUG] register table success
+[GIN-VUE-ADMIN]2020/07/08 - 11:39:36.208 d:/git/gin-vue-test/server/initialize/router.go:18 ▶ [DEBUG] use middleware logger
+[GIN-VUE-ADMIN]2020/07/08 - 11:39:36.208 d:/git/gin-vue-test/server/initialize/router.go:21 ▶ [DEBUG] use middleware cors
+[GIN-VUE-ADMIN]2020/07/08 - 11:39:36.208 d:/git/gin-vue-test/server/initialize/router.go:23 ▶ [DEBUG] register swagger handler
+[GIN-VUE-ADMIN]2020/07/08 - 11:39:36.209 d:/git/gin-vue-test/server/initialize/router.go:40 ▶ [INFO] router register success
+[GIN-VUE-ADMIN]2020/07/08 - 11:39:36.210 d:/git/gin-vue-test/server/core/server.go:33 ▶ [DEBUG] server run success on  :8888
+[GIN-VUE-ADMIN]2020/07/08 - 15:00:22.757 d:/git/gin-vue-test/server/initialize/db_table.go:25 ▶ [DEBUG] register table success
+[GIN-VUE-ADMIN]2020/07/08 - 15:00:22.759 d:/git/gin-vue-test/server/initialize/router.go:18 ▶ [DEBUG] use middleware logger
+[GIN-VUE-ADMIN]2020/07/08 - 15:00:22.759 d:/git/gin-vue-test/server/initialize/router.go:21 ▶ [DEBUG] use middleware cors
+[GIN-VUE-ADMIN]2020/07/08 - 15:00:22.760 d:/git/gin-vue-test/server/initialize/router.go:23 ▶ [DEBUG] register swagger handler
+[GIN-VUE-ADMIN]2020/07/08 - 15:00:22.760 d:/git/gin-vue-test/server/initialize/router.go:40 ▶ [INFO] router register success
+[GIN-VUE-ADMIN]2020/07/08 - 15:00:22.761 d:/git/gin-vue-test/server/core/server.go:33 ▶ [DEBUG] server run success on  :8888
