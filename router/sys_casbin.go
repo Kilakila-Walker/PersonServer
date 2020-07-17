@@ -8,7 +8,8 @@ import (
 )
 
 func InitCasbinRouter(Router *gin.RouterGroup) {
-	CasbinRouter := Router.Group("casbin").Use(middleware.JWTAuth()).Use(middleware.CasbinHandler())
+	//使用中间件 JWT鉴权
+	CasbinRouter := Router.Group("casbin").Use(middleware.JWTAuth())
 	{
 		CasbinRouter.POST("updateCasbin", api.UpdateCasbin)
 		CasbinRouter.POST("getPolicyPathByAuthorityId", api.GetPolicyPathByAuthorityId)

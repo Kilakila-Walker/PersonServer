@@ -10,13 +10,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// @title    Register
-// @description   register, 用户注册
-// @auth                     （2020/04/05  20:22）
-// @param     u               model.SysUser
-// @return    err             error
-// @return    userInter       *SysUser
-
+// 用户注册
 func Register(u model.Sys_User) (err error, userInter model.Sys_User) {
 	var user model.Sys_User
 	// 判断用户名是否注册
@@ -33,13 +27,7 @@ func Register(u model.Sys_User) (err error, userInter model.Sys_User) {
 	return err, u
 }
 
-// @title    Login
-// @description   login, 用户登录
-// @auth                     （2020/04/05  20:22）
-// @param     u               *model.SysUser
-// @return    err             error
-// @return    userInter       *SysUser
-
+// 用户登录
 func Login(u *model.Sys_User) (err error, userInter *model.Sys_User) {
 	var user model.Sys_User
 	u.Password = utils.EncryDES_Str(u.Password)
@@ -47,14 +35,7 @@ func Login(u *model.Sys_User) (err error, userInter *model.Sys_User) {
 	return err, &user
 }
 
-// @title    ChangePassword
-// @description   change the password of a certain user, 修改用户密码
-// @auth                     （2020/04/05  20:22）
-// @param     u               *model.SysUser
-// @param     newPassword     string
-// @return    err             error
-// @return    userInter       *SysUser
-
+// 修改用户密码
 func ChangePassword(u *model.Sys_User, newPassword string) (err error, userInter *model.Sys_User) {
 	var user model.Sys_User
 	u.Password = utils.EncryDES_Str(u.Password)
@@ -62,14 +43,7 @@ func ChangePassword(u *model.Sys_User, newPassword string) (err error, userInter
 	return err, u
 }
 
-// @title    GetInfoList
-// @description   get user list by pagination, 分页获取数据
-// @auth                      （2020/04/05  20:22）
-// @param     info             request.PageInfo
-// @return    err              error
-// @return    list             interface{}
-// @return    total            int
-
+// 分页获取数据
 func GetUserInfoList(info request.PageInfo) (err error, list interface{}, total int) {
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
@@ -80,15 +54,8 @@ func GetUserInfoList(info request.PageInfo) (err error, list interface{}, total 
 	return err, userList, total
 }
 
-// @title    UploadHeaderImg
-// @description   upload avatar, 用户头像上传更新地址
-// @auth                     （2020/04/05  20:22）
-// @param     uuid            UUID
-// @param     filePath        string
-// @return    err             error
-// @return    userInter       *SysUser
-
-func UploadHeaderImg(uuid uuid.UUID, filePath string) (err error, userInter *model.Sys_User) {
+// 用户头像上传更新地址
+func UploadHeaderImg(uuid string, filePath string) (err error, userInter *model.Sys_User) {
 	var user model.Sys_User
 	err = global.GVA_DB.Where("uuid = ?", uuid).First(&user).Update("header_img", filePath).First(&user).Error
 	return err, &user

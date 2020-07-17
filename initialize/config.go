@@ -1,14 +1,16 @@
-package core
-
+package initialize
+//全局配置
 import (
 	"fmt"
+	"perServer/global"
+
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"perServer/global"
 )
 
 const defaultConfigFile = "config.yaml"
 
+//init先于main程序执行
 func init() {
 	v := viper.New()
 	v.SetConfigFile(defaultConfigFile)

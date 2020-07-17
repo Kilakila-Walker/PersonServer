@@ -1,5 +1,6 @@
 package api
 
+//权限API
 import (
 	"fmt"
 	"perServer/global/response"
@@ -11,14 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// @Tags casbin
-// @Summary 更改角色api权限
-// @Security ApiKeyAuth
-// @accept application/json
-// @Produce application/json
-// @Param data body request.CasbinInReceive true "更改角色api权限"
-// @Success 200 {string} string "{"success":true,"data":{},"msg":"获取成功"}"
-// @Router /casbin/UpdateCasbin [post]
+// 更改角色api权限
 func UpdateCasbin(c *gin.Context) {
 	var cmr request.CasbinInReceive
 	_ = c.ShouldBindJSON(&cmr)
@@ -35,14 +29,7 @@ func UpdateCasbin(c *gin.Context) {
 	}
 }
 
-// @Tags casbin
-// @Summary 获取权限列表
-// @Security ApiKeyAuth
-// @accept application/json
-// @Produce application/json
-// @Param data body request.CasbinInReceive true "获取权限列表"
-// @Success 200 {string} string "{"success":true,"data":{},"msg":"获取成功"}"
-// @Router /casbin/getPolicyPathByAuthorityId [post]
+// 获取权限列表
 func GetPolicyPathByAuthorityId(c *gin.Context) {
 	var cmr request.CasbinInReceive
 	_ = c.ShouldBindJSON(&cmr)
@@ -55,14 +42,7 @@ func GetPolicyPathByAuthorityId(c *gin.Context) {
 	response.ToJson(response.SUCCESS, resp.PolicyPathResponse{Paths: paths}, "成功", c)
 }
 
-// @Tags casbin
-// @Summary casb RBAC RESTFUL测试路由
-// @Security ApiKeyAuth
-// @accept application/json
-// @Produce application/json
-// @Param data body request.CasbinInReceive true "获取权限列表"
-// @Success 200 {string} string "{"success":true,"data":{},"msg":"获取成功"}"
-// @Router /casbin/CasbinTest [get]
+// RESTFUL测试路由
 func CasbinTest(c *gin.Context) {
 	// 测试restful以及占位符代码  随意书写
 	pathParam := c.Param("pathParam")

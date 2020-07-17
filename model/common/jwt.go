@@ -1,11 +1,11 @@
-package request
+package common
 
 import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-// Custom claims structure
-type CustomClaims struct {
+// jwt structure
+type JWToken struct {
 	Uuid     string
 	ID       uint
 	NickName string

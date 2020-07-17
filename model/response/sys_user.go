@@ -9,6 +9,11 @@ type SysUserResponse struct {
 }
 
 type LoginResponse struct {
-	User  model.Sys_User `json:"user"`
-	Token string         `json:"token"`
+	ID        uint   `json:"id"`
+	Uuid      string `json:"uuid"`
+	Username  string `json:"username"`
+	NickName  string `json:"nick_name"`
+	HeaderImg string `json:"header_img"`
+	Mail      string `json:"mail"`
+	Token     string `json:"token"`
 }

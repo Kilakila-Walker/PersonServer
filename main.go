@@ -1,7 +1,6 @@
 package main
 
 import (
-	"perServer/core"
 	"perServer/global"
 	"perServer/initialize"
 	//"runtime"
@@ -20,6 +19,5 @@ func main() {
 	initialize.DBTables()
 	// 程序结束前关闭数据库链接
 	defer global.GVA_DB.Close()
-
-	core.RunWindowsServer()
+	initialize.RunServer()
 }

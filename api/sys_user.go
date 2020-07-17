@@ -1,10 +1,11 @@
 package api
 
+//用户表API
 import (
 	"fmt"
 	"perServer/global"
 	"perServer/global/response"
-	"perServer/middleware"
+	"perServer/global/token"
 	"perServer/model"
 	"perServer/model/common"
 	"perServer/model/request"
@@ -63,6 +64,7 @@ func Login(c *gin.Context) {
 		U := &model.Sys_User{Username: L.Username, Password: L.Password}
 		if err, user := service.Login(U); err != nil {
 			response.ToJson(response.ERROR, gin.H{}, fmt.Sprintf("用户名密码错误或%v", err), c)
+			return
 		} else {
 			tokenNext(c, *user)
 		}
@@ -74,63 +76,74 @@ func Login(c *gin.Context) {
 
 // 登录以后签发jwt
 func tokenNext(c *gin.Context, user model.Sys_User) {
-	j := &middleware.JWT{
-		SigningKey: []byte(global.GVA_CONFIG.JWT.SigningKey), // 唯一签名
-	}
-	clams := request.CustomClaims{
+	countMin := 60 * 60 * 24 * 7 //一周
+	err, oldtoken := service.GetRedisJWT(user.Username)
+	j := token.NewJWT()
+	clams := common.JWToken{
 		Uuid:     user.Uuid,
 		ID:       user.ID,
 		NickName: user.NickName,
 		StandardClaims: jwt.StandardClaims{
-			NotBefore: time.Now().Unix() - 1000,       // 签名生效时间
-			ExpiresAt: time.Now().Unix() + 60*60*24*7, // 过期时间 一周
-			Issuer:    "admin",                        // 签名的发行者
+			IssuedAt:  time.Now().Unix(),                   //签发时间
+			NotBefore: time.Now().Unix() - 1000,            // 签名生效时间
+			ExpiresAt: time.Now().Unix() + int64(countMin), // 过期时间
+			Issuer:    "admin",                             // 签名的发行者
 		},
 	}
-	token, err := j.CreateToken(clams)
-	if err != nil {
+	newtoken, err := j.CreateToken(clams) //创建新token
+	if err == redis.Nil {                 //不存在这个token
+		service.SetRedisJWT(newtoken, user.Username, countMin) //设置新的token
+		response.ToJson(
+			response.SUCCESS,
+			resp.LoginResponse{
+				ID:        user.ID,
+				Uuid:      user.Uuid,
+				Username:  user.Username,
+				NickName:  user.NickName,
+				HeaderImg: user.HeaderImg,
+				Mail:      user.Mail,
+				Token:     newtoken,
+			},
+			"成功",
+			c)
+		return
+	} else if err != nil { //执行错误
 		response.ToJson(response.ERROR, gin.H{}, "获取token失败", c)
 		return
-	}
-	if !global.GVA_CONFIG.System.UseMultipoint {
-		response.ToJson(
-			response.SUCCESS,
-			resp.LoginResponse{
-				User:  user,
-				Token: token,
-			},
-			"成功",
-			c)
-		return
-	}
-	var loginJwt common.Com_Jwt
-	loginJwt.Jwt = token
-	err, jwtStr := service.GetRedisJWT(user.Username)
-	if err == redis.Nil {
-		err := service.SetRedisJWT(loginJwt, user.Username)
-		if err != nil {
-			response.ToJson(response.ERROR, gin.H{}, "设置登录状态失败", c)
+	} else { //存在这个jwt
+		if !global.GVA_CONFIG.System.UseMultipoint { //采用多点登录
+
+			response.ToJson(
+				response.SUCCESS,
+				resp.LoginResponse{
+					ID:        user.ID,
+					Uuid:      user.Uuid,
+					Username:  user.Username,
+					NickName:  user.NickName,
+					HeaderImg: user.HeaderImg,
+					Mail:      user.Mail,
+					Token:     oldtoken,
+				},
+				"成功",
+				c)
+			return
+		} else { //不采用多点登录时使用新的token旧的token过期
+			service.SetRedisJWT(newtoken, user.Username, countMin)
+			response.ToJson(
+				response.SUCCESS,
+				resp.LoginResponse{
+					ID:        user.ID,
+					Uuid:      user.Uuid,
+					Username:  user.Username,
+					NickName:  user.NickName,
+					HeaderImg: user.HeaderImg,
+					Mail:      user.Mail,
+					Token:     newtoken,
+				},
+				"成功",
+				c)
 			return
 		}
-		response.ToJson(
-			response.SUCCESS,
-			resp.LoginResponse{
-				User:  user,
-				Token: token,
-			},
-			"成功",
-			c)
-	} else if err != nil {
-		response.ToJson(response.ERROR, gin.H{}, fmt.Sprintf("%v", err), c)
-	} else {
-		response.ToJson(
-			response.SUCCESS,
-			resp.LoginResponse{
-				User:  user,
-				Token: jwtStr,
-			},
-			"登录成功",
-			c)
 	}
 }
 
@@ -151,8 +164,10 @@ func ChangePassword(c *gin.Context) {
 	U := &model.Sys_User{Username: params.Username, Password: params.Password}
 	if err, _ := service.ChangePassword(U, params.NewPassword); err != nil {
 		response.ToJson(response.ERROR, gin.H{}, "修改失败，请检查用户名密码", c)
+		return
 	} else {
 		response.ToJson(response.SUCCESS, gin.H{}, "修改成功", c)
+		return
 	}
 }
 
@@ -163,12 +178,16 @@ func UploadHeaderImg(c *gin.Context) {
 	err, filePath, code := utils.Upload(uid, req)
 	if code == -1 {
 		response.ToJson(response.ERROR, gin.H{}, "上传方式错误", c)
+		return
 	} else if code == -2 {
 		response.ToJson(response.ERROR, gin.H{}, "缺少postFile内容", c)
+		return
 	} else if code == -3 {
 		response.ToJson(response.ERROR, gin.H{}, "请上传jpg/png/gif格式的图片", c)
+		return
 	} else if code == -4 {
 		response.ToJson(response.ERROR, gin.H{}, "后台打开文件失败", c)
+		return
 	}
 
 	claims, _ := c.Get("claims")
@@ -178,13 +197,16 @@ func UploadHeaderImg(c *gin.Context) {
 	uuid := waitUse.Uuid
 	if err != nil {
 		response.ToJson(response.ERROR, gin.H{}, fmt.Sprintf("后台错误，%v", err), c)
+		return
 	} else {
 		// 修改数据库后得到修改后的user并且返回供前端使用
 		err, user := service.UploadHeaderImg(uuid, filePath)
 		if err != nil {
 			response.ToJson(response.ERROR, gin.H{}, fmt.Sprintf("修改数据库链接失败，%v", err), c)
+			return
 		} else {
 			response.ToJson(response.ERROR, resp.SysUserResponse{User: *user}, "成功", c)
+			return
 		}
 	}
 
@@ -202,6 +224,7 @@ func GetUserList(c *gin.Context) {
 	err, list, total := service.GetUserInfoList(pageInfo)
 	if err != nil {
 		response.ToJson(response.ERROR, gin.H{}, fmt.Sprintf("获取数据失败，%v", err), c)
+		return
 	} else {
 		response.ToJson(response.SUCCESS, resp.PageResult{
 			List:     list,
@@ -209,5 +232,6 @@ func GetUserList(c *gin.Context) {
 			Page:     pageInfo.Page,
 			PageSize: pageInfo.PageSize,
 		}, "成功", c)
+		return
 	}
 }

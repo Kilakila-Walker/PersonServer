@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"perServer/global"
 	"github.com/gin-gonic/gin"
 	"github.com/unrolled/secure"
 )
@@ -9,10 +10,11 @@ import (
 // 用https把这个中间件在router里面use一下就好
 
 func LoadTls() gin.HandlerFunc {
+	address := fmt.Sprintf("localhost:%d", global.GVA_CONFIG.System.Addr)
 	return func(c *gin.Context) {
 		middleware := secure.New(secure.Options{
 			SSLRedirect: true,
-			SSLHost:     "localhost:443",
+			SSLHost:     address,
 		})
 		err := middleware.Process(c.Writer, c.Request)
 		if err != nil {

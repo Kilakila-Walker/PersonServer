@@ -4,11 +4,11 @@
 casbin:
     model-path: './resource/rbac_model.conf'
 
-# jwt configuration
+# jwt 签名密钥
 jwt:
     signing-key: 'personServerAdmin'
 
-# mysql connect configuration
+# mysql 连接配置
 mysql:
     username: root
     password: 'Tt15978096339'
@@ -27,7 +27,7 @@ redis:
     password: ''
     db: 0
 
-# system configuration 65535
+# system configuration MAX 65535
 system:
     use-multipoint: true
     env: 'public'  # Change to "develop" to skip authentication for development mode
@@ -40,9 +40,9 @@ captcha:
     img-width: 240
     img-height: 80
 
-# logger configuration
+# logger 
+#level:panic fatal error warn info debug trace
 log:
-    prefix: '[perServer]'
     log-file: true
-    stdout: 'DEBUG'
-    file: 'DEBUG'
+    level: 'debug'
+    file: 'serverLog'

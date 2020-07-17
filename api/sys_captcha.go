@@ -1,5 +1,6 @@
 package api
 
+//验证码API
 import (
 	"fmt"
 	"perServer/global"
@@ -12,13 +13,7 @@ import (
 
 var store = base64Captcha.DefaultMemStore
 
-// @Tags base
-// @Summary 生成验证码
-// @Security ApiKeyAuth
-// @accept application/json
-// @Produce application/json
-// @Success 200 {string} string "{"success":true,"data":{},"msg":"获取成功"}"
-// @Router /base/captcha [post]
+// 生成验证码
 func Captcha(c *gin.Context) {
 	//字符,公式,验证码配置
 	// 生成默认数字的driver

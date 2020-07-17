@@ -5,16 +5,7 @@ import (
 	"perServer/model"
 )
 
-// @title         FindOrCreateFile
-// @description   Check your file if it does not exist, or return current slice of the file
 // 上传文件时检测当前文件属性，如果没有文件则创建，有则返回文件的当前切片
-// @auth                     （2020/04/05  20:22）
-// @param     fileMd5         string
-// @param     fileName        string
-// @param     chunkTotal      int
-// @return    err             error
-// @return    file            ExaFile
-
 func FindOrCreateFile(fileMd5 string, fileName string, chunkTotal int) (err error, file model.ExaFile) {
 	var cfile model.ExaFile
 	cfile.FileMd5 = fileMd5
@@ -32,14 +23,7 @@ func FindOrCreateFile(fileMd5 string, fileName string, chunkTotal int) (err erro
 	}
 }
 
-// @title    CreateFileChunk
-// @description   create a chunk of the file, 创建文件切片记录
-// @auth                       （2020/04/05  20:22）
-// @param     id                unit
-// @param     fileChunkPath     string
-// @param     fileChunkNumber   int
-// @return                      error
-
+// 创建文件切片记录
 func CreateFileChunk(id uint, fileChunkPath string, fileChunkNumber int) error {
 	var chunk model.ExaFileChunk
 	chunk.FileChunkPath = fileChunkPath
@@ -49,13 +33,7 @@ func CreateFileChunk(id uint, fileChunkPath string, fileChunkNumber int) error {
 	return err
 }
 
-// @title         FileCreateComplete
-// @description   file creation, 文件合成完成
-// @auth                     （2020/04/05  20:22）
-// @param     fileMd5         string
-// @param     fileName        string
-// @param     filePath        string
-// @return                    error
+// 文件合成完成
 
 func FileCreateComplete(fileMd5 string, fileName string, filePath string) error {
 	var file model.ExaFile
@@ -66,14 +44,7 @@ func FileCreateComplete(fileMd5 string, fileName string, filePath string) error 
 	return err
 }
 
-// @title    DeleteFileChunk
-// @description   delete a chuck of the file, 删除文件切片记录
-// @auth                     （2020/04/05  20:22）
-// @param     FileMd5         string
-// @param     FileName        string
-// @param     FilePath        string
-// @return                    error
-
+// 删除文件切片记录
 func DeleteFileChunk(fileMd5 string, fileName string, filePath string) error {
 	var chunks []model.ExaFileChunk
 	var file model.ExaFile

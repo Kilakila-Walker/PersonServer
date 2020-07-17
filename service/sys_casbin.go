@@ -12,13 +12,7 @@ import (
 	gormadapter "github.com/casbin/gorm-adapter"
 )
 
-// @title    UpdateCasbin
-// @description   update casbin authority, 更新casbin权限
-// @auth                     （2020/04/05  20:22）
-// @param     authorityId      string
-// @param     casbinInfos      []CasbinInfo
-// @return                     error
-
+// 更新casbin权限
 func UpdateCasbin(authorityId string, casbinInfos []request.CasbinInfo) error {
 	ClearCasbin(0, authorityId)
 	for _, v := range casbinInfos {
@@ -35,25 +29,14 @@ func UpdateCasbin(authorityId string, casbinInfos []request.CasbinInfo) error {
 	return nil
 }
 
-// @title    AddCasbin
-// @description   add casbin authority, 添加权限
-// @auth                     （2020/04/05  20:22）
-// @param     cm              model.CasbinModel
-// @return                    bool
+// 添加权限
 
 func AddCasbin(cm model.Sys_Casbin) bool {
 	e := Casbin()
 	return e.AddPolicy(cm.RoleId, cm.Path, cm.Method)
 }
 
-// @title    UpdateCasbinApi
-// @description   update casbin apis, API更新随动
-// @auth                     （2020/04/05  20:22）
-// @param     oldPath          string
-// @param     newPath          string
-// @param     oldMethod        string
-// @param     newMethod        string
-// @return                     error
+// API更新随动
 
 func UpdateCasbinApi(oldPath string, newPath string, oldMethod string, newMethod string) error {
 	var cs []model.Sys_Casbin
@@ -64,11 +47,7 @@ func UpdateCasbinApi(oldPath string, newPath string, oldMethod string, newMethod
 	return err
 }
 
-// @title    GetPolicyPathByAuthorityId
-// @description   get policy path by authorityId, 获取权限列表
-// @auth                     （2020/04/05  20:22）
-// @param     authorityId     string
-// @return                    []string
+// 获取权限列表
 
 func GetPolicyPathByAuthorityId(authorityId string) (pathMaps []request.CasbinInfo) {
 	e := Casbin()
@@ -82,23 +61,14 @@ func GetPolicyPathByAuthorityId(authorityId string) (pathMaps []request.CasbinIn
 	return pathMaps
 }
 
-// @title    ClearCasbin
-// @description   清除匹配的权限
-// @auth                     （2020/04/05  20:22）
-// @param     v               int
-// @param     p               string
-// @return                    bool
-
+// 清除匹配的权限
 func ClearCasbin(v int, p ...string) bool {
 	e := Casbin()
 	return e.RemoveFilteredPolicy(v, p...)
 
 }
 
-// @title    Casbin
-// @description   store to DB, 持久化到数据库  引入自定义规则
-// @auth                     （2020/04/05  20:22）
-
+// 持久化到数据库  引入自定义规则
 func Casbin() *casbin.Enforcer {
 	a := gormadapter.NewAdapterByDB(global.GVA_DB)
 	e := casbin.NewEnforcer(global.GVA_CONFIG.Casbin.ModelPath, a)
@@ -107,26 +77,14 @@ func Casbin() *casbin.Enforcer {
 	return e
 }
 
-// @title    ParamsMatch
-// @description   customized rule, 自定义规则函数
-// @auth                     （2020/04/05  20:22）
-// @param     fullNameKey1    string
-// @param     key2            string
-// @return                    bool
-
+// 自定义规则函数
 func ParamsMatch(fullNameKey1 string, key2 string) bool {
 	key1 := strings.Split(fullNameKey1, "?")[0]
 	// 剥离路径后再使用casbin的keyMatch2
 	return util.KeyMatch2(key1, key2)
 }
 
-// @title    ParamsMatchFunc
-// @description   customized function, 自定义规则函数
-// @auth                     （2020/04/05  20:22）
-// @param     args            ...interface{}
-// @return                    interface{}
-// @return                    error
-
+// 自定义规则函数
 func ParamsMatchFunc(args ...interface{}) (interface{}, error) {
 	name1 := args[0].(string)
 	name2 := args[1].(string)

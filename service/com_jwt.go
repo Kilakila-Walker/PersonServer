@@ -2,7 +2,7 @@ package service
 
 import (
 	"perServer/global"
-	"perServer/model/common"
+	"time"
 )
 
 // 获取redis jwt
@@ -11,8 +11,9 @@ func GetRedisJWT(userName string) (err error, redisJWT string) {
 	return err, redisJWT
 }
 
-// 设置redis jwt
-func SetRedisJWT(jwtList common.Com_Jwt, userName string) (err error) {
-	err = global.GVA_REDIS.Set(userName, jwtList.Jwt, 1000*1000*1000*60*60*24*7).Err()
+// 设置redis token
+func SetRedisJWT(token string, userName string, countMin int) (err error) {
+	duration := 1000 * 1000 * 1000 * countMin
+	err = global.GVA_REDIS.Set(userName, token, time.Duration(duration)).Err()
 	return err
 }

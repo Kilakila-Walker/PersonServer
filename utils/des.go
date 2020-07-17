@@ -6,6 +6,7 @@ import (
 	"crypto/des"
 )
 
+//填充
 func padding(src []byte, blocksize int) []byte {
 	n := len(src)
 	padnum := blocksize - n%blocksize
@@ -14,6 +15,7 @@ func padding(src []byte, blocksize int) []byte {
 	return dst
 }
 
+//不填充
 func unpadding(src []byte) []byte {
 	n := len(src)
 	unpadnum := int(src[n-1])
@@ -21,6 +23,7 @@ func unpadding(src []byte) []byte {
 	return dst
 }
 
+//byte加密
 func EncryptDES(src []byte) []byte {
 	key := []byte("DaMaoYAD")
 	block, _ := des.NewCipher(key)
@@ -36,6 +39,8 @@ func EncryDES_Str(str string) string {
 	enByte := EncryptDES(byteStr)
 	return string(enByte[:])
 }
+
+//byte解密
 func DecryptDES(src []byte) []byte {
 	key := []byte("DaMaoYAD")
 	block, _ := des.NewCipher(key)

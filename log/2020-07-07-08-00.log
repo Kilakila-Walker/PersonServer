@@ -1,2 +1,0 @@
-[GIN-VUE-ADMIN]2020/07/07 - 15:30:56.007 d:/git/gin-vue-test/server/initialize/mysql.go:14 ▶ [ERROR] MySQL启动异常 dial tcp 127.0.0.1:3306: connectex: No connection could be made because the target machine actively refused it.
-[GIN-VUE-ADMIN]2020/07/07 - 15:44:34.084 d:/git/gin-vue-test/server/initialize/mysql.go:14 ▶ [ERROR] MySQL启动异常 dial tcp 127.0.0.1:3306: connectex: No connection could be made because the target machine actively refused it.

@@ -1,5 +1,5 @@
 package initialize
-
+//数据表迁移
 import (
 	"perServer/global"
 	"perServer/model"

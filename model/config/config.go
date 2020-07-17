@@ -49,8 +49,7 @@ type Captcha struct {
 }
 
 type Log struct {
-	Prefix  string `mapstructure:"prefix" json:"prefix" yaml:"prefix"`
 	LogFile bool   `mapstructure:"log-file" json:"logFile" yaml:"log-file"`
-	Stdout  string `mapstructure:"stdout" json:"stdout" yaml:"stdout"`
+	Level   string `mapstructure:"level" json:"level" yaml:"level"`
 	File    string `mapstructure:"file" json:"file" yaml:"file"`
 }
