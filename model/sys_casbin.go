@@ -1,13 +1,9 @@
 package model
 
-import (
-	"github.com/jinzhu/gorm"
-)
-
 //权限表 根据角色划分权限
 type Sys_Casbin struct {
-	gorm.Model
-	RoleId uint   `json:"role_id" gorm:"comment:'角色id'"`
-	Path   string `json:"path" gorm:"comment:'API路径';type:varchar(50)"`
-	Method string `json:"method" gorm:"comment:'访问形式';type:varchar(50)"`
+	ID      uint   `json:"id" gorm:"primary_key;AUTO_INCREMENT"`
+	RoleUid string `json:"role_uid" gorm:"comment:'角色uid';type:varchar(50);"`
+	Path    string `json:"path" gorm:"comment:'路径';type:varchar(50);"`
+	Method  string `json:"method" gorm:"comment:'方式';type:varchar(50);"`
 }

@@ -1,5 +1,6 @@
 package service
 
+//sql 尽可能参数化 不然会有注入风险
 import (
 	"errors"
 	"perServer/global"
@@ -20,6 +21,7 @@ func Register(u model.Sys_User) (err error, userInter model.Sys_User) {
 		return errors.New("用户名已注册"), userInter
 	} else {
 		// 否则 附加uuid 密码des加密 注册
+		u.RoleUid = "default"
 		u.Password = utils.EncryDES_Str(u.Password)
 		u.Uuid = uuid.NewV4().String()
 		err = global.GVA_DB.Create(&u).Error

@@ -3,7 +3,7 @@ package middleware
 import (
 	"perServer/global"
 	"perServer/global/response"
-	"perServer/model/common"
+	"perServer/global/token"
 	"perServer/service"
 
 	"github.com/gin-gonic/gin"
@@ -12,8 +12,16 @@ import (
 // 鉴权中间件 暂时未修改好 需要在jwt验证之后开启 开启方式在router文件夹
 func CasbinHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		claims, _ := c.Get("claims")
-		waitUse := claims.(*common.JWToken)
+		waitUse, code := token.GetClaims(c)
+		if code != 0 {
+			response.ToJson(
+				response.ERROR,
+				gin.H{"reload": true},
+				"未登录或非法访问",
+				c)
+			c.Abort()
+			return
+		}
 		// 获取请求的URI
 		obj := c.Request.URL.RequestURI()
 		// 获取请求方法

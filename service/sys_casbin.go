@@ -1,93 +1,74 @@
 package service
 
 import (
-	"errors"
 	"perServer/global"
 	"perServer/model"
 	"perServer/model/request"
-	"strings"
+	"perServer/model/response"
 
 	"github.com/casbin/casbin"
-	"github.com/casbin/casbin/util"
 	gormadapter "github.com/casbin/gorm-adapter"
 )
 
-// 更新casbin权限
-func UpdateCasbin(authorityId string, casbinInfos []request.CasbinInfo) error {
-	ClearCasbin(0, authorityId)
-	for _, v := range casbinInfos {
-		cm := model.Sys_Casbin{
-			RoleId: 0,
-			Path:   v.Path,
-			Method: v.Method,
-		}
-		addflag := AddCasbin(cm)
-		if addflag == false {
-			return errors.New("存在相同api,添加失败,请联系管理员")
-		}
+//更新权限
+func UpdateCasbin(ce request.CasbinEdit) error {
+	var cs model.Sys_Casbin
+	upCasbin := model.Sys_Casbin{
+		ID:      ce.ID,
+		RoleUid: ce.RoleUid,
+		Path:    ce.Path,
+		Method:  ce.Method,
 	}
-	return nil
+	err := global.GVA_DB.Model(&cs).Where("id = ?", ce.ID).Updates(upCasbin).Error
+	return err
 }
 
 // 添加权限
-
-func AddCasbin(cm model.Sys_Casbin) bool {
+func AddCasbin(ce request.CasbinEdit) bool {
 	e := Casbin()
-	return e.AddPolicy(cm.RoleId, cm.Path, cm.Method)
+	return e.AddPolicy(ce.RoleUid, ce.Path, ce.Method)
 }
 
 // API更新随动
-
 func UpdateCasbinApi(oldPath string, newPath string, oldMethod string, newMethod string) error {
-	var cs []model.Sys_Casbin
-	err := global.GVA_DB.Table("casbin_rule").Where("v1 = ? AND v2 = ?", oldPath, oldMethod).Find(&cs).Updates(map[string]string{
-		"v1": newPath,
-		"v2": newMethod,
+	var cs model.Sys_Casbin
+	err := global.GVA_DB.Model(&cs).Where("path = ? AND method = ?", oldPath, oldMethod).Updates(map[string]interface{}{
+		"path":   newPath,
+		"method": newMethod,
 	}).Error
 	return err
 }
 
 // 获取权限列表
-
-func GetPolicyPathByAuthorityId(authorityId string) (pathMaps []request.CasbinInfo) {
+func GetCasbin(roleUid string) (CasbinList []response.Casbin_Res) {
 	e := Casbin()
-	list := e.GetFilteredPolicy(0, authorityId)
+	list := e.GetFilteredPolicy(0, roleUid)
 	for _, v := range list {
-		pathMaps = append(pathMaps, request.CasbinInfo{
+		CasbinList = append(CasbinList, response.Casbin_Res{
+			RoleId: roleUid,
 			Path:   v[1],
 			Method: v[2],
 		})
 	}
-	return pathMaps
+	return CasbinList
+}
+
+//删除某项权限
+func DelCasbin(ce request.CasbinEdit) bool {
+	e := Casbin()
+	return e.RemovePolicy(ce.RoleUid, ce.Path, ce.Method)
 }
 
 // 清除匹配的权限
 func ClearCasbin(v int, p ...string) bool {
 	e := Casbin()
 	return e.RemoveFilteredPolicy(v, p...)
-
 }
 
-// 持久化到数据库  引入自定义规则
+// 持久化到数据库
 func Casbin() *casbin.Enforcer {
 	a := gormadapter.NewAdapterByDB(global.GVA_DB)
 	e := casbin.NewEnforcer(global.GVA_CONFIG.Casbin.ModelPath, a)
-	e.AddFunction("ParamsMatch", ParamsMatchFunc)
 	_ = e.LoadPolicy()
 	return e
-}
-
-// 自定义规则函数
-func ParamsMatch(fullNameKey1 string, key2 string) bool {
-	key1 := strings.Split(fullNameKey1, "?")[0]
-	// 剥离路径后再使用casbin的keyMatch2
-	return util.KeyMatch2(key1, key2)
-}
-
-// 自定义规则函数
-func ParamsMatchFunc(args ...interface{}) (interface{}, error) {
-	name1 := args[0].(string)
-	name2 := args[1].(string)
-
-	return ParamsMatch(name1, name2), nil
 }

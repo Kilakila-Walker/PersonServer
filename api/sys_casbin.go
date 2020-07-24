@@ -4,8 +4,8 @@ package api
 import (
 	"fmt"
 	"perServer/global/response"
+	"perServer/global/token"
 	"perServer/model/request"
-	resp "perServer/model/response"
 	"perServer/service"
 	"perServer/utils"
 
@@ -14,14 +14,72 @@ import (
 
 // 更改角色api权限
 func UpdateCasbin(c *gin.Context) {
-	var cmr request.CasbinInReceive
-	_ = c.ShouldBindJSON(&cmr)
-	AuthorityIdVerifyErr := utils.Verify(cmr, utils.CustomizeMap["AuthorityIdVerify"])
-	if AuthorityIdVerifyErr != nil {
-		response.ToJson(response.ERROR, gin.H{}, AuthorityIdVerifyErr.Error(), c)
+	//绑定
+	var params request.CasbinEdit
+	_ = c.ShouldBindJSON(&params)
+	//验证规则
+	UserVerify := utils.Rules{
+		"id":        {utils.NotEmpty()},
+		"role_uid":  {utils.NotEmpty()},
+		"api_token": {utils.NotEmpty()},
+		"method":    {utils.NotEmpty()},
+		"path":      {utils.NotEmpty()},
+	}
+	//验证
+	UserVerifyErr := utils.Verify(params, UserVerify)
+	if UserVerifyErr != nil {
+		response.ToJson(response.ERROR, gin.H{}, UserVerifyErr.Error(), c)
 		return
 	}
-	err := service.UpdateCasbin(cmr.AuthorityId, cmr.CasbinInfos)
+	// 获取token信息
+	waitUse, _ := token.GetClaims(c)
+	roleUid := waitUse.RoleUid
+	// 获取请求的URI
+	uri := c.Request.URL.RequestURI()
+	//验证此次提交是否有申请过token
+	verCode := token.ApiTokenVeri(uri+roleUid, params.ApiToken)
+	if verCode != 0 {
+		response.ToJson(response.ERROR, gin.H{}, "不存在该请求记录", c)
+		return
+	}
+	err := service.UpdateCasbin(params)
+	if err != nil {
+		response.ToJson(response.ERROR, gin.H{}, fmt.Sprintf("添加规则失败，%v", err), c)
+	} else {
+		response.ToJson(response.SUCCESS, gin.H{}, "添加规则成功", c)
+	}
+}
+
+//添加角色API权限
+func AddCasbin(c *gin.Context) {
+	//绑定
+	var params request.CasbinEdit
+	_ = c.ShouldBindJSON(&params)
+	//验证规则
+	UserVerify := utils.Rules{
+		"role_uid":  {utils.NotEmpty()},
+		"api_token": {utils.NotEmpty()},
+		"method":    {utils.NotEmpty()},
+		"path":      {utils.NotEmpty()},
+	}
+	//验证
+	UserVerifyErr := utils.Verify(params, UserVerify)
+	if UserVerifyErr != nil {
+		response.ToJson(response.ERROR, gin.H{}, UserVerifyErr.Error(), c)
+		return
+	}
+	// 获取token信息
+	waitUse, _ := token.GetClaims(c)
+	roleUid := waitUse.RoleUid
+	// 获取请求的URI
+	uri := c.Request.URL.RequestURI()
+	//验证此次提交是否有申请过token
+	verCode := token.ApiTokenVeri(uri+roleUid, params.ApiToken)
+	if verCode != 0 {
+		response.ToJson(response.ERROR, gin.H{}, "不存在该请求记录", c)
+		return
+	}
+	err := service.UpdateCasbin(params)
 	if err != nil {
 		response.ToJson(response.ERROR, gin.H{}, fmt.Sprintf("添加规则失败，%v", err), c)
 	} else {
@@ -31,21 +89,31 @@ func UpdateCasbin(c *gin.Context) {
 
 // 获取权限列表
 func GetPolicyPathByAuthorityId(c *gin.Context) {
-	var cmr request.CasbinInReceive
-	_ = c.ShouldBindJSON(&cmr)
-	AuthorityIdVerifyErr := utils.Verify(cmr, utils.CustomizeMap["AuthorityIdVerify"])
-	if AuthorityIdVerifyErr != nil {
-		response.ToJson(response.ERROR, gin.H{}, AuthorityIdVerifyErr.Error(), c)
+	//绑定
+	var params request.CasbinGet
+	_ = c.ShouldBindJSON(&params)
+	//验证规则
+	UserVerify := utils.Rules{
+		"role_uid":  {utils.NotEmpty()},
+		"api_token": {utils.NotEmpty()},
+	}
+	//验证
+	UserVerifyErr := utils.Verify(params, UserVerify)
+	if UserVerifyErr != nil {
+		response.ToJson(response.ERROR, gin.H{}, UserVerifyErr.Error(), c)
 		return
 	}
-	paths := service.GetPolicyPathByAuthorityId(cmr.AuthorityId)
-	response.ToJson(response.SUCCESS, resp.PolicyPathResponse{Paths: paths}, "成功", c)
-}
-
-// RESTFUL测试路由
-func CasbinTest(c *gin.Context) {
-	// 测试restful以及占位符代码  随意书写
-	pathParam := c.Param("pathParam")
-	query := c.Query("query")
-	response.ToJson(response.SUCCESS, gin.H{"pathParam": pathParam, "query": query}, "获取规则成功", c)
+	// 获取token信息
+	waitUse, _ := token.GetClaims(c)
+	roleUid := waitUse.RoleUid
+	// 获取请求的URI
+	uri := c.Request.URL.RequestURI()
+	//验证此次提交是否有申请过token
+	verCode := token.ApiTokenVeri(uri+roleUid, params.ApiToken)
+	if verCode != 0 {
+		response.ToJson(response.ERROR, gin.H{}, "不存在该请求记录", c)
+		return
+	}
+	paths := service.GetCasbin(params.RoleUid)
+	response.ToJson(response.SUCCESS, paths, "", c)
 }

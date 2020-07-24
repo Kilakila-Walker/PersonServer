@@ -1,7 +1,8 @@
 package response
 
-import "perServer/model/request"
-
-type PolicyPathResponse struct {
-	Paths []request.CasbinInfo `json:"paths"`
+//casbin
+type Casbin_Res struct {
+	RoleId string `json:"role_id"`
+	Path   string `json:"path"`
+	Method string `json:"method"`
 }

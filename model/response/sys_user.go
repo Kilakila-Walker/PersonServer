@@ -16,4 +16,5 @@ type LoginResponse struct {
 	HeaderImg string `json:"header_img"`
 	Mail      string `json:"mail"`
 	Token     string `json:"token"`
+	RoleUid   string `json:"role_uid"`
 }

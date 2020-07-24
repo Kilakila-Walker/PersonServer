@@ -13,5 +13,6 @@ type Sys_User struct {
 	NickName  string `json:"nick_name" gorm:"comment:'用户昵称';type:varchar(50)" `
 	HeaderImg string `json:"header_img" gorm:"comment:'用户头像';type:varchar(250)"`
 	Mail      string `json:"mail" gorm:"comment:'邮箱';type:varchar(100)"`
-	InviteId  string `json:"invite_id" gorm:"comment:'邀请人ID';type:varchar(50)"`
+	RoleUid   string `json:"role_uid" gorm:"comment:'角色UID';type:varchar(50)"`
+	InviteUid string `json:"invite_uid" gorm:"comment:'邀请人UID';type:varchar(50)"`
 }

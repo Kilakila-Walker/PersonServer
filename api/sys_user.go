@@ -1,5 +1,6 @@
 package api
 
+//api处理数据组装、调用、返回的关系处理
 //用户表API
 import (
 	"fmt"
@@ -77,12 +78,13 @@ func Login(c *gin.Context) {
 // 登录以后签发jwt
 func tokenNext(c *gin.Context, user model.Sys_User) {
 	countMin := 60 * 60 * 24 * 7 //一周
-	err, oldtoken := service.GetRedisJWT(user.Username)
+	err, oldtoken := service.GetRedis(user.Username)
 	j := token.NewJWT()
 	clams := common.JWToken{
 		Uuid:     user.Uuid,
 		ID:       user.ID,
 		NickName: user.NickName,
+		RoleUid:  user.RoleUid,
 		StandardClaims: jwt.StandardClaims{
 			IssuedAt:  time.Now().Unix(),                   //签发时间
 			NotBefore: time.Now().Unix() - 1000,            // 签名生效时间
@@ -90,9 +92,9 @@ func tokenNext(c *gin.Context, user model.Sys_User) {
 			Issuer:    "admin",                             // 签名的发行者
 		},
 	}
-	newtoken, err := j.CreateToken(clams) //创建新token
-	if err == redis.Nil {                 //不存在这个token
-		service.SetRedisJWT(newtoken, user.Username, countMin) //设置新的token
+	newtoken, err := j.CreateJwt(clams) //创建新token
+	if err == redis.Nil {               //不存在这个token
+		service.SetRedis(newtoken, user.Username, countMin) //设置新的token
 		response.ToJson(
 			response.SUCCESS,
 			resp.LoginResponse{
@@ -102,6 +104,7 @@ func tokenNext(c *gin.Context, user model.Sys_User) {
 				NickName:  user.NickName,
 				HeaderImg: user.HeaderImg,
 				Mail:      user.Mail,
+				RoleUid:   user.RoleUid,
 				Token:     newtoken,
 			},
 			"成功",
@@ -128,7 +131,7 @@ func tokenNext(c *gin.Context, user model.Sys_User) {
 				c)
 			return
 		} else { //不采用多点登录时使用新的token旧的token过期
-			service.SetRedisJWT(newtoken, user.Username, countMin)
+			service.SetRedis(newtoken, user.Username, countMin)
 			response.ToJson(
 				response.SUCCESS,
 				resp.LoginResponse{
@@ -149,20 +152,37 @@ func tokenNext(c *gin.Context, user model.Sys_User) {
 
 // 用户修改密码
 func ChangePassword(c *gin.Context) {
+	//绑定
 	var params request.ChangePasswordStruct
 	_ = c.ShouldBindJSON(&params)
+	//验证规则
 	UserVerify := utils.Rules{
-		"Username":    {utils.NotEmpty()},
-		"Password":    {utils.NotEmpty()},
-		"NewPassword": {utils.NotEmpty()},
+		"api_token":    {utils.NotEmpty()},
+		"username":     {utils.NotEmpty()},
+		"password":     {utils.NotEmpty()},
+		"new_password": {utils.NotEmpty()},
 	}
+	//验证
 	UserVerifyErr := utils.Verify(params, UserVerify)
 	if UserVerifyErr != nil {
 		response.ToJson(response.ERROR, gin.H{}, UserVerifyErr.Error(), c)
 		return
 	}
+	// 获取token信息
+	waitUse, _ := token.GetClaims(c)
+	roleUid := waitUse.RoleUid
+	// 获取请求的URI
+	uri := c.Request.URL.RequestURI()
+	//验证此次提交是否有申请过token
+	verCode := token.ApiTokenVeri(uri+roleUid, params.ApiToken)
+	if verCode != 0 {
+		response.ToJson(response.ERROR, gin.H{}, "不存在该请求记录", c)
+		return
+	}
+	//组装数据并调用修改service
 	U := &model.Sys_User{Username: params.Username, Password: params.Password}
-	if err, _ := service.ChangePassword(U, params.NewPassword); err != nil {
+	err, _ := service.ChangePassword(U, params.NewPassword)
+	if err != nil {
 		response.ToJson(response.ERROR, gin.H{}, "修改失败，请检查用户名密码", c)
 		return
 	} else {
@@ -173,8 +193,33 @@ func ChangePassword(c *gin.Context) {
 
 // 用户上传头像
 func UploadHeaderImg(c *gin.Context) {
+	//绑定
+	var params request.ApitokenOnly
+	_ = c.ShouldBindJSON(&params)
+	//验证规则
+	UserVerify := utils.Rules{
+		"api_token": {utils.NotEmpty()},
+	}
+	//验证
+	UserVerifyErr := utils.Verify(params, UserVerify)
+	if UserVerifyErr != nil {
+		response.ToJson(response.ERROR, gin.H{}, UserVerifyErr.Error(), c)
+		return
+	}
 	req := c.Request
 	uid := uuid.NewV4().String()
+	// 获取token信息
+	waitUse, _ := token.GetClaims(c)
+	roleUid := waitUse.RoleUid
+	uuid := waitUse.Uuid
+	// 获取请求的URI
+	uri := c.Request.URL.RequestURI()
+	//验证此次提交是否有申请过token
+	verCode := token.ApiTokenVeri(uri+roleUid, params.ApiToken)
+	if verCode != 0 {
+		response.ToJson(response.ERROR, gin.H{}, "不存在该请求记录", c)
+		return
+	}
 	err, filePath, code := utils.Upload(uid, req)
 	if code == -1 {
 		response.ToJson(response.ERROR, gin.H{}, "上传方式错误", c)
@@ -189,12 +234,7 @@ func UploadHeaderImg(c *gin.Context) {
 		response.ToJson(response.ERROR, gin.H{}, "后台打开文件失败", c)
 		return
 	}
-
-	claims, _ := c.Get("claims")
 	// 获取头像文件
-	// 这里我们通过断言获取 claims内的所有内容
-	waitUse := claims.(*request.CustomClaims)
-	uuid := waitUse.Uuid
 	if err != nil {
 		response.ToJson(response.ERROR, gin.H{}, fmt.Sprintf("后台错误，%v", err), c)
 		return
@@ -216,11 +256,30 @@ func UploadHeaderImg(c *gin.Context) {
 func GetUserList(c *gin.Context) {
 	var pageInfo request.PageInfo
 	_ = c.ShouldBindJSON(&pageInfo)
-	PageVerifyErr := utils.Verify(pageInfo, utils.CustomizeMap["PageVerify"])
-	if PageVerifyErr != nil {
-		response.ToJson(response.ERROR, gin.H{}, PageVerifyErr.Error(), c)
+	//验证规则
+	UserVerify := utils.Rules{
+		"api_token": {utils.NotEmpty()},
+		"page":      {utils.NotEmpty()},
+		"pageSize":  {utils.NotEmpty()},
+	}
+	//验证
+	UserVerifyErr := utils.Verify(pageInfo, UserVerify)
+	if UserVerifyErr != nil {
+		response.ToJson(response.ERROR, gin.H{}, UserVerifyErr.Error(), c)
 		return
 	}
+	// 获取token信息
+	waitUse, _ := token.GetClaims(c)
+	uuid := waitUse.Uuid
+	// 获取请求的URI
+	uri := c.Request.URL.RequestURI()
+	//验证此次提交是否有申请过token
+	verCode := token.ApiTokenVeri(uri+uuid, pageInfo.ApiToken)
+	if verCode != 0 {
+		response.ToJson(response.ERROR, gin.H{}, "不存在该请求记录", c)
+		return
+	}
+	//获取用户信息
 	err, list, total := service.GetUserInfoList(pageInfo)
 	if err != nil {
 		response.ToJson(response.ERROR, gin.H{}, fmt.Sprintf("获取数据失败，%v", err), c)

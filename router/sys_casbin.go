@@ -11,8 +11,8 @@ func InitCasbinRouter(Router *gin.RouterGroup) {
 	//使用中间件 JWT鉴权
 	CasbinRouter := Router.Group("casbin").Use(middleware.JWTAuth())
 	{
-		CasbinRouter.POST("updateCasbin", api.UpdateCasbin)
+		CasbinRouter.POST("addCasbin", api.AddCasbin)
 		CasbinRouter.POST("getPolicyPathByAuthorityId", api.GetPolicyPathByAuthorityId)
-		CasbinRouter.GET("casbinTest/:pathParam", api.CasbinTest)
+
 	}
 }
